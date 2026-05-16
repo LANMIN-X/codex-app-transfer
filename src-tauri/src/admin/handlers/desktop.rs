@@ -41,7 +41,9 @@ use super::providers::{
     active_provider, provider_api_key, provider_default_model, provider_display_name,
     provider_index, provider_model_capabilities, provider_model_mappings, provider_supports_1m,
 };
-use super::proxy::{ensure_gateway_key, read_gateway_key, read_proxy_port, start_proxy_if_needed};
+use super::proxy::{
+    ensure_gateway_key, read_gateway_key, read_proxy_host, read_proxy_port, start_proxy_if_needed,
+};
 use codex_app_transfer_registry::DEFAULT_UPDATE_URL;
 
 const ONE_M_CONTEXT_WINDOW: u64 = 1_000_000;
@@ -706,7 +708,11 @@ async fn sync_desktop_for_active_provider(state: &AdminState) -> Value {
 
     let mut proxy_started = false;
     if target.requires_proxy {
-        match start_proxy_if_needed(&state.proxy_manager, target.proxy_port).await {
+        let host = load_registry()
+            .ok()
+            .map(|cfg| read_proxy_host(&cfg))
+            .unwrap_or_else(|| "127.0.0.1".to_owned());
+        match start_proxy_if_needed(&state.proxy_manager, &host, target.proxy_port).await {
             Ok(started) => proxy_started = started,
             Err(e) => {
                 return json!({"attempted": true, "success": false, "mode": target.mode, "requiresProxy": target.requires_proxy, "message": e});

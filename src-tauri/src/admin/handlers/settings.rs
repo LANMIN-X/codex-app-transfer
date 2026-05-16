@@ -52,6 +52,7 @@ pub(super) fn default_config_value() -> Value {
             "theme": "default",
             "language": "zh",
             "proxyPort": 18080,
+            "proxyHost": "127.0.0.1",
             "adminPort": 18081,
            "autoStart": false,
            "autoApplyOnStart": true,

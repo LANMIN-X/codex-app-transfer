@@ -397,6 +397,13 @@
             <input class="form-control form-control-lg" type="number" id="settingsProxyPort" value="18080">
           </div>
           <div class="settings-row">
+            <strong data-i18n="settings.proxyHost">服务监听地址</strong>
+            <select class="form-select form-select-lg" id="settingsProxyHost">
+              <option value="127.0.0.1" data-i18n="settings.proxyHostLocal">127.0.0.1（本地服务）</option>
+              <option value="0.0.0.0" data-i18n="settings.proxyHostLan">0.0.0.0（局域网服务）</option>
+            </select>
+          </div>
+          <div class="settings-row">
             <strong data-i18n="settings.adminPort">管理端口</strong>
             <input class="form-control form-control-lg" type="number" id="settingsAdminPort" value="18081">
           </div>

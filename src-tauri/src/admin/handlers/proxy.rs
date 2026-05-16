@@ -21,6 +21,14 @@ pub(super) fn read_proxy_port(cfg: &RawConfig) -> u16 {
         .and_then(|p| u16::try_from(p).ok())
         .unwrap_or(18080)
 }
+pub(super) fn read_proxy_host(cfg: &RawConfig) -> String {
+    cfg.get("settings")
+        .and_then(|s| s.get("proxyHost"))
+        .and_then(|v| v.as_str())
+        .filter(|h| matches!(*h, "127.0.0.1" | "0.0.0.0"))
+        .unwrap_or("127.0.0.1")
+        .to_owned()
+}
 
 pub(super) fn read_gateway_key(cfg: &RawConfig) -> String {
     cfg.get("gatewayApiKey")
@@ -43,12 +51,13 @@ pub(super) fn ensure_gateway_key(cfg: &mut RawConfig) -> String {
 
 pub(super) async fn start_proxy_if_needed(
     manager: &ProxyManager,
+    host: &str,
     port: u16,
 ) -> Result<bool, String> {
     if manager.status().running {
         manager.stop_silent();
     }
-    manager.start(port).await.map(|_| true)
+    manager.start(host, port).await.map(|_| true)
 }
 
 // ── /api/proxy/* ─────────────────────────────────────────────────────
@@ -56,17 +65,25 @@ pub(super) async fn start_proxy_if_needed(
 #[derive(Debug, Deserialize)]
 pub struct StartProxyInput {
     pub port: Option<u16>,
+    pub host: Option<String>,
 }
 
 pub async fn start_proxy(
     State(state): State<AdminState>,
     body: Option<Json<StartProxyInput>>,
 ) -> impl IntoResponse {
+    let loaded_cfg = load_registry().ok();
     let port = body
+        .as_ref()
         .and_then(|b| b.0.port)
-        .or_else(|| load_registry().ok().map(|cfg| read_proxy_port(&cfg)))
+        .or_else(|| loaded_cfg.as_ref().map(read_proxy_port))
         .unwrap_or(18080);
-    match state.proxy_manager.start(port).await {
+    let host = body
+        .as_ref()
+        .and_then(|b| b.0.host.clone())
+        .or_else(|| loaded_cfg.as_ref().map(read_proxy_host))
+        .unwrap_or_else(|| "127.0.0.1".to_owned());
+    match state.proxy_manager.start(&host, port).await {
         Ok(s) => {
             let actual_port = s
                 .addr
