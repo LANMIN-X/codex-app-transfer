@@ -356,11 +356,11 @@
       });
     },
 
-    async startProxy(port) {
+    async startProxy(port, host) {
       if (port) {
-        await this.saveSettings({ proxyPort: Number(port) });
+        await this.saveSettings({ proxyPort: Number(port), ...(host ? { proxyHost: host } : {}) });
       }
-      await api('POST', '/api/proxy/start', port ? { port: Number(port) } : undefined);
+      await api('POST', '/api/proxy/start', port ? { port: Number(port), ...(host ? { host } : {}) } : undefined);
       const status = await api('GET', '/api/status');
       return {
         running: !!status.proxyRunning,

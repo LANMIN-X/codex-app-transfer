@@ -2044,6 +2044,7 @@
     const settings = await CCApi.getSettings();
     applyTheme(settings.theme || "default");
     $("#settingsProxyPort").value = settings.proxyPort;
+    $("#settingsProxyHost").value = settings.proxyHost || "127.0.0.1";
     $("#settingsAdminPort").value = settings.adminPort;
     $("#autoApplyOnStart").checked = settings.autoApplyOnStart !== false;
    $("#autoUnlockCodexPlugins").checked = !!settings.autoUnlockCodexPlugins;
@@ -2171,6 +2172,7 @@
     const settings = {
       theme: currentTheme,
       proxyPort: Number($("#settingsProxyPort").value),
+      proxyHost: $("#settingsProxyHost").value || "127.0.0.1",
       adminPort: Number($("#settingsAdminPort").value),
       autoApplyOnStart: $("#autoApplyOnStart")?.checked !== false,
      autoUnlockCodexPlugins: $("#autoUnlockCodexPlugins")?.checked || false,
@@ -2704,7 +2706,8 @@
       }
 
       if (action === "proxy-start") {
-        await CCApi.startProxy($("#proxyPort") ? $("#proxyPort").value : 18080);
+        const settings = await CCApi.getSettings();
+        await CCApi.startProxy($("#proxyPort") ? $("#proxyPort").value : 18080, settings.proxyHost || "127.0.0.1");
         await renderProxy();
         await renderDashboard();
         showToast(t("toast.proxyStarted"));
@@ -2723,7 +2726,8 @@
           await CCApi.stopProxy();
           showToast(t("toast.proxyStopped"));
         } else {
-          await CCApi.startProxy($("#proxyPort") ? $("#proxyPort").value : 18080);
+          const settings = await CCApi.getSettings();
+          await CCApi.startProxy($("#proxyPort") ? $("#proxyPort").value : 18080, settings.proxyHost || "127.0.0.1");
           showToast(t("toast.proxyStarted"));
         }
         await renderProxy();
@@ -3149,6 +3153,7 @@
 
     $("#modelProvider")?.addEventListener("change", renderMappingCards);
     $("#settingsProxyPort").addEventListener("change", saveSettingsFromForm);
+    $("#settingsProxyHost").addEventListener("change", saveSettingsFromForm);
     $("#settingsAdminPort").addEventListener("change", saveSettingsFromForm);
     $("#settingsUpdateUrl").addEventListener("change", saveSettingsFromForm);
     $("#autoApplyOnStart")?.addEventListener("change", saveSettingsFromForm);

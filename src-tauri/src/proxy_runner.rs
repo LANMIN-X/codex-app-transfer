@@ -52,8 +52,8 @@ impl ProxyManager {
         Self::default()
     }
 
-    /// 启动代理监听 `127.0.0.1:<port>`。已 running 时沿用旧版语义返回当前状态。
-    pub async fn start(&self, port: u16) -> Result<ProxyStatus, String> {
+    /// 启动代理监听 `<host>:<port>`。已 running 时沿用旧版语义返回当前状态。
+    pub async fn start(&self, host: &str, port: u16) -> Result<ProxyStatus, String> {
         // 1. 预检查(短锁)
         {
             let guard = self.handle.lock().unwrap();
@@ -70,9 +70,9 @@ impl ProxyManager {
 
         // 2. 装载 resolver + 绑定 listener(async)
         let snapshot = load_resolver_snapshot()?;
-        let listener = TcpListener::bind(format!("127.0.0.1:{port}"))
+        let listener = TcpListener::bind(format!("{host}:{port}"))
             .await
-            .map_err(|e| format!("bind 127.0.0.1:{port} failed: {e}"))?;
+            .map_err(|e| format!("bind {host}:{port} failed: {e}"))?;
         let addr = listener
             .local_addr()
             .map_err(|e| format!("cannot read listener address: {e}"))?;
